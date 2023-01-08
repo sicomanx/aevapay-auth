@@ -1,0 +1,163 @@
+version: "3.9"
+
+services:
+
+# Postgres sql database ==========================================================================================
+
+  postgres:
+    container_name: postgres_auth
+    image: "postgres:latest"
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - 5432:5432
+    networks:
+      - auth
+
+# Postgres sql database web dashboard ============================================================================
+
+  pgadmin:
+    container_name: pgadmin_auth
+    image: "dpage/pgadmin4:latest"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    networks:
+      - auth
+
+# Keycloak identity service ======================================================================================
+
+  keycloak:
+    container_name: keycloak_auth
+    image: "docker.io/bitnami/keycloak:latest"
+    environment:
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_DATABASE_HOST: postgres_auth
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_NAME: auth_db
+      KEYCLOAK_DATABASE_USER: admin
+      KEYCLOAK_DATABASE_PASSWORD: admin
+    ports:
+      - 8080:8080
+    networks:
+      - auth
+
+# Mailhog SMTP service ===========================================================================================
+
+  mailhog:
+    image: "mailhog/mailhog"
+    container_name: mailhog_auth
+    volumes:
+      - ./docker-data/maildir:/maildir
+    environment:
+      MH_STORAGE: maildir
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - auth
+
+networks:
+  auth:
+    name: auth
+    driver: bridge
+
+
+
+
+  # mail-server:
+  #   image: docker.io/mailserver/docker-mailserver:latest
+  #   container_name: mailserver
+  #   hostname: mail
+  #   domainname: sicoman.email
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./docker-data/dms/mail-data/:/var/mail/
+  #     - ./docker-data/dms/mail-state/:/var/mail-state/
+  #     - ./docker-data/dms/mail-logs/:/var/log/mail/
+  #     - ./docker-data/dms/config/:/tmp/docker-mailserver/
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./docker-data/acme-companion/certs/:/etc/letsencrypt/live/:ro
+  #   environment:
+  #     # production conf
+  #     ENABLE_FAIL2BAN: 1
+  #     PERMIT_DOCKER: network
+  #     ONE_DIR: 1
+  #     ENABLE_POSTGREY: 0
+  #     ENABLE_CLAMAV: 0
+  #     ENABLE_SPAMASSASSIN: 0
+  #     SPOOF_PROTECTION: 0
+  #     TZ: Africa/Cairo
+  #     SSL_TYPE: letsencrypt
+  #     VIRTUAL_HOST: mailserver.sicoman.email
+  #     LETSENCRYPT_HOST: mailserver.sicoman.email
+  
+  #     # development conf
+  #     ENABLE_FAIL2BAN: 1
+  #     PERMIT_DOCKER: network
+  #     ONE_DIR: 1
+  #     ENABLE_SPAMASSASSIN: 1
+  #     SPAMASSASSIN_SPAM_TO_INBOX: 1
+  #     ENABLE_SASLAUTHD: 0
+  #     ENABLE_POSTGREY: 1
+  #     ENABLE_CLAMAV: 1
+  #     TZ: Africa/Cairo
+  #   cap_add:
+  #     - NET_ADMIN # For Fail2Ban to work
+  #     - SYS_PTRACE
+  #   ports:
+  #     - 25:25
+  #     - 143:143
+  #     - 587:587
+  #     - 465:465
+  #     - 993:993
+  #   networks:
+  #     - auth
+
+  # acme-companion:
+  #   image: nginxproxy/acme-companion
+  #   container_name: nginx_proxy_acme
+  #   restart: always
+  #   environment:
+  #     NGINX_PROXY_CONTAINER: nginx_proxy
+  #   volumes:
+  #     - ./docker-data/nginx-proxy/html/:/usr/share/nginx/html/
+  #     - ./docker-data/nginx-proxy/vhost.d/:/etc/nginx/vhost.d/
+  #     - ./docker-data/acme-companion/certs/:/etc/nginx/certs/:rw
+  #     - ./docker-data/acme-companion/acme-state/:/etc/acme.sh/
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   networks:
+  #     - auth
+
+  # reverse-proxy:
+  #   image: nginxproxy/nginx-proxy
+  #   container_name: nginx_proxy
+  #   restart: always
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   volumes:
+  #     - ./docker-data/nginx-proxy/html/:/usr/share/nginx/html/
+  #     - ./docker-data/nginx-proxy/vhost.d/:/etc/nginx/vhost.d/
+  #     - ./docker-data/acme-companion/certs/:/etc/nginx/certs/:ro
+  #     - /var/run/docker.sock:/tmp/docker.sock:ro
+  #     - dhparam:/etc/nginx/dhparam
+  #   networks:
+  #     - auth
+
+# volumes:
+#   dhparam:
+ 
+
+# before running mailserver service do the following:
+
+# 1- create mailserver user inbox
+# docker run --rm -e MAIL_USER=sicoman@sicoman.email -e MAIL_PASS=sicoman -it mailserver/docker-mailserver /bin/sh -c 'echo "$MAIL_USER|$(doveadm pw -s SHA512-CRYPT -u $MAIL_USER -p $MAIL_PASS)"' >> ./docker-data/dms/config/postfix-accounts.cf
+
+# 2- create SSL certificate using certbot
+# docker run --rm -it -v "${PWD}/docker-data/certbot/certs/:/etc/letsencrypt/" -v "${PWD}/docker-data/certbot/logs/:/var/log/letsencrypt/" -p 80:80 certbot/certbot certonly --standalone -d mailserver.sicoman.email
