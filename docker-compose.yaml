@@ -47,6 +47,29 @@ services:
     networks:
       - auth
 
+# Keycloak identity service ======================================================================================
+
+  keycloak-phone:
+    container_name: keycloak_phone_auth
+    image: "coopersoft/keycloak:x86_64-19.0.1_phone-2.1.2"
+    # restart: always
+    ports:
+      - 8901:8080
+    command:
+      - start-dev --spi-phone-message-service-default-service=dummy
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_PROXY: edge
+      DB_VENDOR: postgres
+      DB_ADDR: postgres_auth
+      DB_DATABASE: auth_db
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_PORT: 5432
+#    links:
+#      - database:database
+
 # Mailhog SMTP service ===========================================================================================
 
   mailhog:

@@ -1,28 +1,29 @@
-import { Body, Controller, Get, HttpCode, Post, Query, Redirect } from "@nestjs/common";
 import { Unprotected } from "nest-keycloak-connect";
 import { AuthService } from "./auth.service";
+import { Body, Controller, Get, HttpCode, Post, Query, Redirect } from "@nestjs/common";
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) {}
 
-    @Get('login')
+    @Get('signin')
     @Redirect('' , 301)
     @Unprotected()
     login() {
         return this.authService.getLoginUrl();
-    }
-
-    @Get('callback')
-    @Unprotected()
-    getAccessToken(@Query('code') code: string) {
-        return this.authService.getAccessToken(code);
     }
     
     @Post('signin')
     @Unprotected()
     signin(@Body() authUserDto:any) {
         return this.authService.signin(authUserDto);
+    }
+
+    @Get('signup')
+    @Redirect('' , 301)
+    @Unprotected()
+    register() {
+        return this.authService.getRegisterUrl();
     }
 
     @Post('signup')
@@ -41,6 +42,12 @@ export class AuthController {
     @Unprotected()
     refreshAccessToken(@Body('refresh_token') refresh_token: string) {
         return this.authService.refreshAccessToken(refresh_token);
+    }
+
+    @Get('callback')
+    @Unprotected()
+    getAccessToken(@Query('code') code: string) {
+        return this.authService.getAccessToken(code);
     }
 
 }

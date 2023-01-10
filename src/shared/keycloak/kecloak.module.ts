@@ -1,5 +1,5 @@
 import { Global, Module } from "@nestjs/common";
-import { ConfigurationService } from "../config/config.service";
+import { ConfigurationService } from "../config/compile-time-config/config.service";
 import { KeycloakConnectModule, PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
 
 @Global()

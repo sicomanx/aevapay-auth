@@ -19,7 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "typeorm-ts-node-esm"
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migrate:up": "typeorm-ts-node-commonjs migration:run -d ./src/shared/database/database.datasource.ts",
+    "migrate:down": "typeorm-ts-node-commonjs migration:revert -d ./src/shared/database/database.datasource.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^1.0.1",
@@ -27,7 +29,6 @@
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
-    "@nestjs/typeorm": "^9.0.1",
     "@types/es6-shim": "^0.31.42",
     "cache-manager": "^5.1.4",
     "keycloak-connect": "^18.0.2",
